@@ -271,3 +271,17 @@ select option:hover {
   background: #2d8cff !important;
   color: #06101a !important;
 }
+/* ===== Receita - bloco com borda elegante ===== */
+.rx-prescription {
+  background: #ffffff !important;
+  color: #111827 !important;
+
+  border: 1px solid #d1d5db;   /* borda fina */
+  border-radius: 8px;
+
+  padding: 16px;
+  margin-top: 12px;
+
+  min-height: 160px;
+  line-height: 1.5;
+}
