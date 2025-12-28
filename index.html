@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>BTX Agenda Premium</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- jsPDF local-cache (o SW tenta manter isso offline após o 1º uso online) -->
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div id="app" class="app">
+
+    <!-- LOGIN -->
+    <section id="screenLogin" class="screen screenLogin">
+      <div class="loginCard">
+        <div class="brandRow">
+          <img class="brandIcon" src="icon-192.png" alt="BTX" />
+          <div>
+            <div class="brandTitle">BTX Agenda Premium</div>
+            <div class="brandSub">Offline-first • Documentos inteligentes • Backup JSON</div>
+          </div>
+        </div>
+
+        <div class="loginForm">
+          <label class="lbl">Senha</label>
+          <input id="loginPass" class="inp" type="password" placeholder="Ex.: btx007" autocomplete="current-password" />
+          <button id="btnLogin" class="btn primary">Entrar</button>
+          <div class="hint">
+            Padrão: <b>btx007</b>. Você pode trocar dentro de <span class="kbd">Configurações</span>.
+          </div>
+        </div>
+
+        <div class="loginFoot">
+          <button id="btnInstall" class="btn ghost">Baixar app (PWA)</button>
+          <div id="installInfo" class="muted"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- APP -->
+    <section id="screenMain" class="screen screenMain hidden">
+      <header class="topbar">
+        <div class="topLeft">
+          <img class="logo" src="icon-192.png" alt="BTX" />
+          <div>
+            <div class="title">BTX Agenda Premium</div>
+            <div class="subtitle" id="activeProfLine">Carregando…</div>
+          </div>
+        </div>
+
+        <div class="topActions">
+          <button id="btnBackup" class="btn ghost" title="Exportar JSON">Backup</button>
+          <label class="btn ghost file" title="Importar JSON">
+            Restaurar
+            <input id="fileRestore" type="file" accept="application/json" />
+          </label>
+          <button id="btnLock" class="btn ghost" title="Bloquear">Bloquear</button>
+        </div>
+      </header>
+
+      <div class="layout">
+        <aside class="sidebar">
+          <div class="card">
+            <div class="cardTitle">Clínica / Profissionais</div>
+            <div class="muted">O profissional ativo preenche automaticamente todos os documentos.</div>
+
+            <div class="row2">
+              <button id="btnProfNew" class="btn">Novo profissional</button>
+              <button id="btnClinicEdit" class="btn">Dados da clínica</button>
+            </div>
+
+            <div class="selectRow">
+              <label class="lbl">Profissional ativo</label>
+              <select id="selProf" class="inp"></select>
+            </div>
+          </div>
+
+          <div class="card nav">
+            <div class="cardTitle">Módulos</div>
+            <button class="navItem" data-tab="agenda">Agenda</button>
+            <button class="navItem" data-tab="receita">Receita</button>
+            <button class="navItem" data-tab="orcamento">Orçamento</button>
+            <button class="navItem" data-tab="atestado">Atestado</button>
+            <button class="navItem" data-tab="laudo">Laudo</button>
+            <button class="navItem" data-tab="recibo">Recibo</button>
+            <button class="navItem" data-tab="config">Configurações</button>
+          </div>
+
+          <div class="card">
+            <div class="cardTitle">Busca rápida</div>
+            <input id="q" class="inp" placeholder="Buscar paciente na agenda…" />
+            <div id="qResults" class="qResults"></div>
+          </div>
+
+          <div class="card">
+            <div class="cardTitle">Status</div>
+            <div class="muted" id="statusLine">Pronto.</div>
+          </div>
+        </aside>
+
+        <main class="main">
+          <!-- AGENDA -->
+          <section id="tab-agenda" class="tab">
+            <div class="grid2">
+              <div class="card">
+                <div class="cardTitle">Agenda</div>
+                <div class="row3">
+                  <button id="btnToday" class="btn">Hoje</button>
+                  <button id="btnPrevDay" class="btn">◀</button>
+                  <button id="btnNextDay" class="btn">▶</button>
+                </div>
+
+                <div class="row2">
+                  <input id="dayPick" class="inp" type="date" />
+                  <select id="viewMode" class="inp">
+                    <option value="day">Dia</option>
+                    <option value="week">Semana</option>
+                  </select>
+                </div>
+
+                <div class="sep"></div>
+
+                <div class="row2">
+                  <button id="btnNewAppt" class="btn primary">Novo agendamento</button>
+                  <button id="btnAgendaPDF" class="btn">PDF dia/semana</button>
+                </div>
+
+                <div class="muted small">
+                  Dica: clique num agendamento para editar status (confirmado/faltou/realizado) e abrir WhatsApp 1-toque.
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="cardTitle">Novo agendamento (rápido)</div>
+
+                <div class="row2">
+                  <input id="aHora" class="inp" type="time" />
+                  <input id="aPaciente" class="inp" placeholder="Paciente" />
+                </div>
+                <div class="row2">
+                  <input id="aFone" class="inp" placeholder="WhatsApp (DDD+Número)" />
+                  <input id="aServico" class="inp" placeholder="Serviço / Profissional (opcional)" />
+                </div>
+                <textarea id="aObs" class="inp" rows="3" placeholder="Observações"></textarea>
+
+                <div class="row2">
+                  <select id="aStatus" class="inp">
+                    <option value="pendente">Pendente</option>
+                    <option value="confirmado">Confirmado</option>
+                    <option value="realizado">Realizado</option>
+                    <option value="faltou">Faltou</option>
+                    <option value="remarcado">Remarcado</option>
+                  </select>
+                  <button id="btnSaveAppt" class="btn primary">Salvar</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="cardTitle" id="agendaTitle">Agenda do dia</div>
+              <div id="agendaList" class="agendaList"></div>
+            </div>
+          </section>
+
+          <!-- RECEITA -->
+          <section id="tab-receita" class="tab hidden">
+            <div class="card">
+              <div class="docHeader">
+                <div>
+                  <div class="cardTitle">Receita inteligente</div>
+                  <div class="muted">Presets + campo livre. Gera PDF individualizado.</div>
+                </div>
+                <div class="docActions">
+                  <button id="btnRxPDF" class="btn primary">Gerar PDF</button>
+                  <button id="btnRxClear" class="btn">Limpar</button>
+                </div>
+              </div>
+
+              <div class="grid2">
+                <div>
+                  <label class="lbl">Paciente</label>
+                  <input id="rxPaciente" class="inp" placeholder="Nome do paciente" />
+                </div>
+                <div>
+                  <label class="lbl">Data</label>
+                  <input id="rxData" class="inp" type="date" />
+                </div>
+              </div>
+
+              <div class="sep"></div>
+
+              <div class="grid3">
+                <div>
+                  <label class="lbl">Categoria</label>
+                  <select id="rxCat" class="inp"></select>
+                </div>
+                <div>
+                  <label class="lbl">Modelo</label>
+                  <select id="rxModel" class="inp"></select>
+                </div>
+                <div>
+                  <label class="lbl">Adicionar</label>
+                  <button id="btnRxAdd" class="btn">+ Inserir</button>
+                </div>
+              </div>
+
+              <label class="lbl">Receita (editável)</label>
+              <textarea id="rxText" class="inp" rows="10"></textarea>
+            </div>
+          </section>
+
+          <!-- ORÇAMENTO -->
+          <section id="tab-orcamento" class="tab hidden">
+            <div class="card">
+              <div class="docHeader">
+                <div>
+                  <div class="cardTitle">Orçamento</div>
+                  <div class="muted">Texto livre • Sem soma automática (padrão BTX)</div>
+                </div>
+                <div class="docActions">
+                  <button id="btnOrcPDF" class="btn primary">Gerar PDF</button>
+                  <button id="btnOrcClear" class="btn">Limpar</button>
+                </div>
+              </div>
+
+              <div class="grid2">
+                <div>
+                  <label class="lbl">Paciente</label>
+                  <input id="orcPaciente" class="inp" placeholder="Nome do paciente" />
+                </div>
+                <div>
+                  <label class="lbl">Data</label>
+                  <input id="orcData" class="inp" type="date" />
+                </div>
+              </div>
+
+              <label class="lbl">Descrição / itens</label>
+              <textarea id="orcTexto" class="inp" rows="10" placeholder="- Procedimento 1 … R$ …&#10;- Procedimento 2 … R$ …"></textarea>
+
+              <div class="grid2">
+                <div>
+                  <label class="lbl">Validade</label>
+                  <input id="orcValidade" class="inp" placeholder="Ex.: 7 dias" />
+                </div>
+                <div>
+                  <label class="lbl">Observação</label>
+                  <input id="orcObs" class="inp" placeholder="Ex.: pagamento via Pix" />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ATESTADO -->
+          <section id="tab-atestado" class="tab hidden">
+            <div class="card">
+              <div class="docHeader">
+                <div>
+                  <div class="cardTitle">Atestado</div>
+                  <div class="muted">Gera PDF com dados do profissional automaticamente.</div>
+                </div>
+                <div class="docActions">
+                  <button id="btnAtPDF" class="btn primary">Gerar PDF</button>
+                  <button id="btnAtClear" class="btn">Limpar</button>
+                </div>
+              </div>
+
+              <div class="grid2">
+                <div>
+                  <label class="lbl">Paciente</label>
+                  <input id="atPaciente" class="inp" placeholder="Nome do paciente" />
+                </div>
+                <div>
+                  <label class="lbl">Data</label>
+                  <input id="atData" class="inp" type="date" />
+                </div>
+              </div>
+
+              <div class="grid2">
+                <div>
+                  <label class="lbl">Dias de afastamento</label>
+                  <input id="atDias" class="inp" type="number" min="0" placeholder="Ex.: 2" />
+                </div>
+                <div>
+                  <label class="lbl">CID (opcional)</label>
+                  <input id="atCid" class="inp" placeholder="Ex.: K08.9" />
+                </div>
+              </div>
+
+              <label class="lbl">Texto</label>
+              <textarea id="atTexto" class="inp" rows="8">Atesto para os devidos fins que o(a) paciente acima identificado(a) esteve sob meus cuidados nesta data, necessitando afastamento de suas atividades por ____ dia(s).</textarea>
+            </div>
+          </section>
+
+          <!-- LAUDO -->
+          <section id="tab-laudo" class="tab hidden">
+            <div class="card">
+              <div class="docHeader">
+                <div>
+                  <div class="cardTitle">Laudo</div>
+                  <div class="muted">Texto livre com assinatura do profissional.</div>
+                </div>
+                <div class="docActions">
+                  <button id="btnLdPDF" class="btn primary">Gerar PDF</button>
+                  <button id="btnLdClear" class="btn">Limpar</button>
+                </div>
+              </div>
+
+              <div class="grid2">
+                <div>
+                  <label class="lbl">Paciente</label>
+                  <input id="ldPaciente" class="inp" placeholder="Nome do paciente" />
+                </div>
+                <div>
+                  <label class="lbl">Data</label>
+                  <input id="ldData" class="inp" type="date" />
+                </div>
+              </div>
+
+              <label class="lbl">Laudo</label>
+              <textarea id="ldTexto" class="inp" rows="12" placeholder="Descreva o laudo…"></textarea>
+            </div>
+          </section>
+
+          <!-- RECIBO -->
+          <section id="tab-recibo" class="tab hidden">
+            <div class="card">
+              <div class="docHeader">
+                <div>
+                  <div class="cardTitle">Recibo</div>
+                  <div class="muted">Recibo simples e profissional.</div>
+                </div>
+                <div class="docActions">
+                  <button id="btnRcPDF" class="btn primary">Gerar PDF</button>
+                  <button id="btnRcClear" class="btn">Limpar</button>
+                </div>
+              </div>
+
+              <div class="grid2">
+                <div>
+                  <label class="lbl">Recebemos de</label>
+                  <input id="rcPaciente" class="inp" placeholder="Nome do paciente" />
+                </div>
+                <div>
+                  <label class="lbl">Data</label>
+                  <input id="rcData" class="inp" type="date" />
+                </div>
+              </div>
+
+              <div class="grid2">
+                <div>
+                  <label class="lbl">Valor</label>
+                  <input id="rcValor" class="inp" placeholder="R$ 0,00" />
+                </div>
+                <div>
+                  <label class="lbl">Referente a</label>
+                  <input id="rcRef" class="inp" placeholder="Ex.: consulta odontológica" />
+                </div>
+              </div>
+
+              <label class="lbl">Observação</label>
+              <textarea id="rcObs" class="inp" rows="5" placeholder="Opcional…"></textarea>
+            </div>
+          </section>
+
+          <!-- CONFIG -->
+          <section id="tab-config" class="tab hidden">
+            <div class="grid2">
+              <div class="card">
+                <div class="cardTitle">Configurações</div>
+                <div class="muted">Tudo offline-first. Faça backup com frequência.</div>
+
+                <label class="lbl">Senha do app</label>
+                <input id="cfgPass" class="inp" type="text" placeholder="Ex.: btx007" />
+
+                <div class="row2">
+                  <button id="btnSavePass" class="btn primary">Salvar senha</button>
+                  <button id="btnFactoryReset" class="btn danger">Resetar tudo</button>
+                </div>
+
+                <div class="sep"></div>
+
+                <div class="cardTitle">Licença (opcional)</div>
+                <div class="muted small">Você pode usar isso para ativação por dispositivo. É simples e offline.</div>
+
+                <label class="lbl">Chave local</label>
+                <input id="cfgLicense" class="inp" placeholder="Ex.: BTX/0007" />
+                <button id="btnSaveLicense" class="btn">Salvar chave</button>
+
+                <div class="muted small">Dica: deixe a verificação “leve” para não travar: só bloqueia recursos premium quando chave estiver vazia.</div>
+              </div>
+
+              <div class="card">
+                <div class="cardTitle">Ajuda rápida</div>
+                <ul class="help">
+                  <li><b>Backup</b>: exporta tudo para um JSON.</li>
+                  <li><b>Restaurar</b>: importa seu JSON e volta tudo.</li>
+                  <li><b>Offline</b>: abra 1 vez online, depois funciona offline (PWA cache).</li>
+                  <li><b>WhatsApp</b>: clique no agendamento → atalho 1-toque.</li>
+                </ul>
+                <div class="sep"></div>
+                <div class="muted small">BTXTech • Premium build 6.1</div>
+              </div>
+            </div>
+          </section>
+
+        </main>
+      </div>
+
+      <footer class="footer">
+        <div id="footerClinic"></div>
+        <div class="muted">Gerador offline • PDFs individualizados • Dados automáticos do profissional</div>
+      </footer>
+    </section>
+
+    <!-- MODALS -->
+    <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="modalBox">
+        <div class="modalHead">
+          <div id="modalTitle" class="modalTitle">Título</div>
+          <button id="modalClose" class="btn ghost">✕</button>
+        </div>
+        <div id="modalBody" class="modalBody"></div>
+        <div id="modalFoot" class="modalFoot"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script defer src="idb.js"></script>
+  <script defer src="app.js"></script>
+</body>
+</html>
