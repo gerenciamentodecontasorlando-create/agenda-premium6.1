@@ -244,3 +244,30 @@ textarea.inp{ resize:vertical; min-height: 44px; }
   .appt{ grid-template-columns: 88px 1fr; }
   .apptActions{ grid-column:1 / -1; justify-content:flex-start; }
 }
+/* ===== Fix: dropdown/select invisível no Windows (dark theme) ===== */
+select, option {
+  font-family: var(--font);
+}
+
+/* Campo do select (fechado) */
+select {
+  background: var(--panel2) !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  border-radius: 12px;
+  padding: 12px 12px;
+  outline: none;
+}
+
+/* Lista de opções (aberta) */
+select option {
+  background: #0c1728 !important;  /* fundo sólido, não transparente */
+  color: #e8f0ff !important;       /* texto bem visível */
+}
+
+/* Opção selecionada/hover (Windows costuma respeitar isso) */
+select option:checked,
+select option:hover {
+  background: #2d8cff !important;
+  color: #06101a !important;
+}
