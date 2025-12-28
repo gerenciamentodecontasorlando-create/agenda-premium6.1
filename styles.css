@@ -285,3 +285,14 @@ select option:hover {
   min-height: 160px;
   line-height: 1.5;
 }
+@media print {
+  .doc-sheet,
+  .print-area,
+  .receita-container {
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 18mm 16mm;
+    box-sizing: border-box;
+    background: #ffffff;
+  }
+}
